@@ -6,7 +6,7 @@ import { createPrinter, getAllPrinters } from './models/printer';
 import { printQueueService } from './services/printQueueService';
 
 const app = express();
-const PORT = 4000;
+const PORT = 8080;
 
 app.use(cors());
 app.use(express.json());

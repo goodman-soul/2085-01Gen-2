@@ -3,7 +3,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'http://localhost:4000/api';
+const BASE_URL = 'http://localhost:8080/api';
 
 async function testPrintSystem() {
   console.log('=== 校园自助打印系统测试 ===\n');

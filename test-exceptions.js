@@ -3,7 +3,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'http://localhost:4000/api';
+const BASE_URL = 'http://localhost:8080/api';
 
 async function testExceptionScenarios() {
   console.log('=== 异常场景与退款测试 ===\n');

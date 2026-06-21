@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { z } from 'zod';
 import { printQueueService } from '../services/printQueueService';
-import { getJobById, getJobsByStudentId, getAllJobs, getQueuedJobs } from '../models/printJob';
+import { getJobById, getJobsByStudentId, getAllJobs, getQueuedJobs, getActiveJobs } from '../models/printJob';
 import { getPricing, calculatePrice, calculateTotalPages } from '../services/pricingService';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -179,7 +179,7 @@ router.get('/jobs', (req: Request, res: Response) => {
 
 router.get('/queue', (req: Request, res: Response) => {
   try {
-    const jobs = getQueuedJobs();
+    const jobs = getActiveJobs();
     res.json({
       success: true,
       queue: jobs,
@@ -212,13 +212,27 @@ router.post('/jobs/:id/cancel', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/jobs/:id/paper-jam', (req: Request, res: Response) => {
+router.post('/jobs/:id/paper-jam', async (req: Request, res: Response) => {
   try {
     const { atPage } = req.body;
-    const job = printQueueService.triggerPaperJam(req.params.id, atPage || 0);
+    const job = await printQueueService.triggerPaperJam(req.params.id, atPage || 0);
+    
+    if (!job) {
+      res.status(400).json({ 
+        success: false,
+        error: '任务不存在或不在打印中' 
+      });
+      return;
+    }
+
     res.json({
       success: true,
-      message: '模拟卡纸成功',
+      message: `卡纸！已打印 ${job.printedPages}/${job.totalPages} 页，退款 ¥${job.refundAmount}`,
+      job,
+      refund: {
+        amount: job.refundAmount,
+        status: job.refundStatus,
+      },
     });
   } catch (error) {
     console.error('模拟卡纸失败:', error);
@@ -226,13 +240,27 @@ router.post('/jobs/:id/paper-jam', (req: Request, res: Response) => {
   }
 });
 
-router.post('/jobs/:id/out-of-paper', (req: Request, res: Response) => {
+router.post('/jobs/:id/out-of-paper', async (req: Request, res: Response) => {
   try {
     const { atPage } = req.body;
-    const job = printQueueService.triggerOutOfPaper(req.params.id, atPage || 0);
+    const job = await printQueueService.triggerOutOfPaper(req.params.id, atPage || 0);
+    
+    if (!job) {
+      res.status(400).json({ 
+        success: false,
+        error: '任务不存在或不在打印中' 
+      });
+      return;
+    }
+
     res.json({
       success: true,
-      message: '模拟缺纸成功',
+      message: `缺纸！已打印 ${job.printedPages}/${job.totalPages} 页，退款 ¥${job.refundAmount}`,
+      job,
+      refund: {
+        amount: job.refundAmount,
+        status: job.refundStatus,
+      },
     });
   } catch (error) {
     console.error('模拟缺纸失败:', error);

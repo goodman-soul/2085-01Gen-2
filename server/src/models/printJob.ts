@@ -118,6 +118,22 @@ export function getQueuedJobs(): PrintJob[] {
   return rows.map(rowToJob);
 }
 
+export function getActiveJobs(): PrintJob[] {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT * FROM print_jobs 
+    WHERE status IN ('queued', 'printing') 
+    ORDER BY 
+      CASE status 
+        WHEN 'printing' THEN 0 
+        ELSE 1 
+      END,
+      queue_position ASC, 
+      created_at ASC
+  `).all();
+  return rows.map(rowToJob);
+}
+
 export function updateJobStatus(
   id: string, 
   status: PrintStatus, 
